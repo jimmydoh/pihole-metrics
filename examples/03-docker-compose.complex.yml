@@ -1,0 +1,59 @@
+# A sample DNS stack using cloudflared as a DoH resolver
+# This example uses an external macvlan network to allow for custom routing 
+#   behaviour of both pihole and the resolver at the network edge
+# The pihole-metrics container attaches to the pihole containers network
+services:
+  cloudflared-proxy-dns:
+    image: cloudflare/cloudflared:latest
+    environment:
+      - TZ=Australia/Brisbane
+      - TUNNEL_DNS_UPSTREAM=https://1.1.1.1/dns-query,https://1.0.0.1/dns-query
+      - TUNNEL_DNS_ADDRESS=0.0.0.0
+      - TUNNEL_DNS_PORT=5553
+      - TUNNEL_METRICS=0.0.0.0:49312
+    networks:
+      dns_net:
+        ipv4_address: 10.10.10.10
+    command: proxy-dns
+    restart: unless-stopped
+
+  pihole:
+    image: pihole/pihole:latest
+    environment:
+      - TZ=Australia/Brisbane
+      - FTLCONF_dns_upstreams=10.10.10.10#5553
+      - FTLCONF_webserver_api_password=correct horse battery staple
+    volumes:
+      - ./etc-pihole:/etc/pihole
+    networks:
+      custom_net:
+        ipv4_address: 10.10.10.11
+    healthcheck:
+      test: "nslookup google.com localhost > /dev/null; exit $?;"
+      interval: 30s
+      retries: 5
+      start_period: 30s
+      timeout: 2s
+    depends_on:
+      cloudflared-dns-main:
+        condition: service_started
+    restart: unless-stopped
+
+  pihole-metrics:
+    image: ghcr.io/jimmydoh/pihole-metrics
+    environment:
+      - TZ=Australia/Brisbane
+      - LOG_LEVEL=INFO
+      - METRICS_PORT=9617
+      - PIHOLE_HOST=localhost
+      - PIHOLE_PASSWORD=correct horse battery staple
+    network_mode: service:pihole
+    depends_on:
+      pihole:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  dns_net:
+    name: your-external-macvlan-network
+    external: true

@@ -1,0 +1,14 @@
+services:
+  pihole-metrics:
+    image: pihole-metrics
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    environment:
+      - TZ=Australia/Brisbane
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - METRICS_PORT=${METRICS_PORT:-9617}
+      - PIHOLE_HOST=${PIHOLE_HOST:-pi.hole}
+      - PIHOLE_PASSWORD=${PIHOLE_PASSWORD?PIHOLE_PASSWORD required}
+    ports:
+      - ${METRICS_PORT:-9617}:${METRICS_PORT:-9617}

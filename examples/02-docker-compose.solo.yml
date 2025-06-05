@@ -1,0 +1,12 @@
+# An example where pihole-metrics could be running on a separate host to pihole
+#   and change of ports
+services:
+  pihole-metrics:
+    image: ghcr.io/jimmydoh/pihole-metrics
+    environment:
+      - METRICS_PORT=8000
+      - PIHOLE_HOST=10.9.8.7
+      - PIHOLE_PASSWORD=correct horse battery staple
+    ports:
+      - 8888:8000/tcp
+    restart: unless-stopped

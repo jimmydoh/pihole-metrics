@@ -1,0 +1,24 @@
+# A simple example
+services:
+  pihole:
+    image: pihole/pihole:latest
+    environment:
+      - FTLCONF_webserver_api_password=correct horse battery staple
+      - FTLCONF_dns_listeningMode=all
+    ports:
+      - 53:53/tcp
+      - 53:53/udp
+      - 80:80/tcp
+      - 443:443/tcp
+    volumes:
+      - ./etc-pihole:/etc/pihole
+    restart: unless-stopped
+
+  pihole-metrics:
+    image: ghcr.io/jimmydoh/pihole-metrics
+    environment:
+      - PIHOLE_HOST=pihole
+      - PIHOLE_PASSWORD=correct horse battery staple
+    ports:
+      - 9617:9617/tcp
+    restart: unless-stopped
